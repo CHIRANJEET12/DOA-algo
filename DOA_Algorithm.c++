@@ -26,8 +26,8 @@ double cec17_func(const vector<double>& x, int func_num);
 pair<double, vector<double>> DOA(int pop, int T, const vector<double>& lb, const vector<double>& ub, int D, double (*fobj)(const vector<double>&, int), int func_num);
 
 int main() {
-    int pop_size = 50;
-    int max_iter = 500;
+    int pop_size = 100;
+    int max_iter = 1000;
     int run = 10;
     vector<vector<double>> RESULT;
 
