@@ -239,7 +239,6 @@ vector<double> Get_Functions_cec2017(int F, int dim, vector<double>& lb, vector<
 }
 
 double cec17_func(const vector<double>& x, int func_num) {
-    // Placeholder implementation - replace with actual CEC2017 functions
     double sum = 0.0;
     for (double val : x) {
         sum += val * val;
