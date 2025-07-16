@@ -22,10 +22,10 @@ mt19937 gen(rd());
 // ELD Problem Constants
 const int N = 3;
 const double Pd = 850;
-const double P_min[N] = {200, 50, 100};
-const double P_max[N] = {400, 100, 350};
-const double e[N] = {310, 120, 200};
-const double f[N] = {0.0215, 0.263, 0.042};
+const double P_min[N] = {100, 50, 100};
+const double P_max[N] = {600, 200, 400};
+const double e[N] = {300, 150, 200};
+const double f[N] = {0.0315, 0.063, 0.042};
 const double a[N] = {0.001562, 0.00482, 0.00194};
 const double b[N] = {7.92, 7.97, 7.85};
 const double c[N] = {561, 78, 310};
@@ -171,7 +171,7 @@ int main() {
     auto result = DOA(pop, max_iter, lb, ub, convergence_data);
     clock_t end = clock();
 
-    saveConvergenceData(convergence_data, "doa_convergence.csv");
+    saveConvergenceData(convergence_data, "doa_convergence1.csv");
 
     cout << "\nOptimized ELD Solution:\n";
     double totalPower = 0;

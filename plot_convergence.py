@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-data = pd.read_csv('doa_convergence.csv')
+data = pd.read_csv('doa_convergence1.csv')
 
 plt.figure(figsize=(10, 6))
-plt.plot(data['Iteration'], data['BestCost'], linewidth=2)
+plt.plot(data['Iteration'][1:], data['BestCost'][1:], linewidth=2)
 plt.title('DOA Convergence for ELD Problem', fontsize=14)
 plt.xlabel('Iteration', fontsize=12)
 plt.ylabel('Best Cost ($/hr)', fontsize=12)
