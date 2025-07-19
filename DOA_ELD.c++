@@ -20,24 +20,26 @@ random_device rd;
 mt19937 gen(rd());
 
 // ELD Constants
-const int N = 3;
-const double Pd = 850;
-const double P_min[N] = {100, 50, 100};
-const double P_max[N] = {600, 200, 400};
-const double e[N] = {300, 150, 200};
-const double f[N] = {0.0315, 0.063, 0.042};
-const double a[N] = {0.001562, 0.00482, 0.00194};
-const double b[N] = {7.92, 7.97, 7.85};
-const double c[N] = {561, 78, 310};
+const int N = 13;
+const double Pd = 1800;
+const double P_min[N] = {0, 0, 0, 60, 60, 60, 60, 60, 60, 40, 40, 55, 55};
+const double P_max[N] = {680, 360, 360, 180, 180, 180, 180, 180, 180, 120, 120, 120, 120};
+const double A[N] = {0.000284, 0.000056, 0.000056, 0.000324, 0.000324, 0.000324, 0.000324, 0.000324, 0.000324, 0.000324, 0.000324, 0.000284, 0.000284};
+const double b[N] = {8.10, 8.10, 8.10, 7.74, 7.74, 7.74, 7.74, 7.74, 7.74, 8.60, 8.60, 8.60, 8.60};
+const double c[N] = {550, 309, 307, 240, 240, 240, 240, 240, 240, 126, 126, 126, 126};
+const double E[N] = {300, 200, 150, 150, 150, 150, 150, 150, 150, 100, 100, 100, 100};
+const double f[N] = {0.035, 0.042, 0.042, 0.063, 0.063, 0.063, 0.063, 0.063, 0.063, 0.084, 0.084, 0.084, 0.084};
 
-double ELD_cost(const vector<double>& P, int iter = 0, int max_iter = 1) {
-    double cost = 0.0, totalPower = 0.0;
+double ELD_cost(const vector<double>& P) {
+    double cost = 0.0;
+    double totalPower = 0.0;
     for (int i = 0; i < N; ++i) {
-        double valve = e[i] * sin(f[i] * (P_min[i] - P[i]));
-        cost += a[i]*P[i]*P[i] + b[i]*P[i] + c[i] + fabs(valve);
+        double valve = E[i] * sin(f[i] * (P_min[i] - P[i]));
+        cost += A[i] * P[i] * P[i] + b[i] * P[i] + c[i] + fabs(valve);
         totalPower += P[i];
     }
-    double penalty = 100 * fabs(totalPower - Pd); // adjusted penalty
+    // Penalty for power balance violation
+    double penalty = 1e5 * fabs(totalPower - Pd);
     return cost + penalty;
 }
 
@@ -60,23 +62,29 @@ void balancePower(vector<double>& P) {
         P[i] = min(P_max[i], max(P_min[i], P[i]));
     }
 }
+
 pair<double, vector<double>> DOA(int pop, int T, const vector<double>& lb, const vector<double>& ub, vector<double>& convergence) {
     const int D = N;
     vector<vector<double>> x = initialization(pop, D, ub, lb);
+
+    // Balance initial population
+    for (auto& agent : x)
+        balancePower(agent);
+
     vector<double> sbest(D);
     double fbest = numeric_limits<double>::infinity();
     convergence.clear();
     convergence.reserve(T / 10);
 
-    double w_min = 0.4, w_max = 0.9;
     uniform_real_distribution<> rand01(0, 1);
+
+    double w_min = 0.4, w_max = 0.9;
 
     for (int i = 0; i < T; ++i) {
         double w = w_max * pow((1.0 - (double)i / T), 1.5);
 
-
         for (int j = 0; j < pop; ++j) {
-            double fit = ELD_cost(x[j], i, T);
+            double fit = ELD_cost(x[j]);
             if (fit < fbest) {
                 fbest = fit;
                 sbest = x[j];
@@ -112,7 +120,7 @@ pair<double, vector<double>> DOA(int pop, int T, const vector<double>& lb, const
             }
             balancePower(candidate);
 
-            double cand_fit = ELD_cost(candidate, i, T);
+            double cand_fit = ELD_cost(candidate);
             if (cand_fit < fbest) {
                 fbest = cand_fit;
                 sbest = candidate;
@@ -124,7 +132,7 @@ pair<double, vector<double>> DOA(int pop, int T, const vector<double>& lb, const
             int worst_idx = 0;
             double worst_fit = -1e9;
             for (int j = 0; j < pop; ++j) {
-                double fit = ELD_cost(x[j], i, T);
+                double fit = ELD_cost(x[j]);
                 if (fit > worst_fit) {
                     worst_fit = fit;
                     worst_idx = j;
@@ -135,7 +143,7 @@ pair<double, vector<double>> DOA(int pop, int T, const vector<double>& lb, const
     }
 
     balancePower(sbest);
-    fbest = ELD_cost(sbest, T, T);
+    fbest = ELD_cost(sbest);
 
     return {fbest, sbest};
 }
@@ -154,6 +162,7 @@ void saveConvergenceData(const vector<double>& convergence, const string& filena
     outfile.close();
     cout << "Convergence data saved to " << filename << endl;
 }
+
 double calculateSD(const vector<double>& data, double mean) {
     double sumSqDiff = 0.0;
     for (double x : data) {
@@ -171,15 +180,17 @@ double calculateMedian(vector<double> data) {
     else
         return data[n / 2];
 }
+
 int main()
 {
     int pop = 50;
     int max_iter = 500;
-    int runs = 30;
+    int runs = 50;
 
     vector<double> lb(P_min, P_min + N);
     vector<double> ub(P_max, P_max + N);
-    vector<double> convergence_data, best_convergence;
+
+    vector<double> best_convergence;
 
     vector<double> all_costs;
     vector<vector<double>> all_solutions;
@@ -211,7 +222,7 @@ int main()
     double std_dev = calculateSD(all_costs, mean_cost);
 
     // Save convergence of best run
-    saveConvergenceData(best_convergence, "doa_convergence_best1.csv");
+    saveConvergenceData(best_convergence, "doa_convergence_best.csv");
 
     cout << "\nBest Optimized ELD Solution:\n";
     double totalPower = 0;
