@@ -1,16 +1,16 @@
-import matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
+import matplotlib.pyplot as plt
 
-data = pd.read_csv('doa_convergence1.csv')
+# Load data
+df = pd.read_csv("doa_convergence_best1.csv")
 
+# Plotting
 plt.figure(figsize=(10, 6))
-plt.plot(data['Iteration'][1:], data['BestCost'][1:], linewidth=2)
-plt.title('DOA Convergence for ELD Problem', fontsize=14)
-plt.xlabel('Iteration', fontsize=12)
-plt.ylabel('Best Cost ($/hr)', fontsize=12)
-plt.grid(True, linestyle='--', alpha=0.7)
+plt.plot(df['Iteration'][1:], df['BestCost'][1:], marker='o', linestyle='-', color='blue')
+plt.title("Economic Load Dispatch using DREAM Algorithm")
+plt.xlabel("Iteration")
+plt.ylabel("Best Cost (Rs/hr)")
+plt.grid(True)
 plt.tight_layout()
-
-plt.savefig('convergence_plot.png', dpi=300)
+plt.savefig("doa_convergence_best1.png")
 plt.show()
